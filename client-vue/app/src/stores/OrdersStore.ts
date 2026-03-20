@@ -75,7 +75,7 @@ export const useOrders = defineStore("orders", {
                         ))
                     } as Order
                 )
-                window.open(formUrl, '_blank')
+                window.open(formUrl, "_blank")
             }
             catch (e) {
                 console.log("createOrder error:", e)
@@ -85,7 +85,7 @@ export const useOrders = defineStore("orders", {
             }
         },
 
-        async fetchPaymentStatus(orderId: string, bankOrderId: string): Promise<'successful' | 'failure'> {
+        async fetchPaymentStatus(orderId: string, bankOrderId: string): Promise<"successful" | "failure"> {
             this.loading = true
 
             try {
