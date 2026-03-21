@@ -1,7 +1,9 @@
 <script setup lang="ts">
-    import Header from "./components/Header.vue";
-    import { useUser } from "./stores/UserStore.ts";
     import { onMounted } from "vue";
+
+    import Header from "./components/Header.vue";
+
+    import { useUser } from "./stores/UserStore.ts";
     import { useCart } from "./stores/CartStore.ts";
     import { useOrders } from "./stores/OrdersStore.ts";
 

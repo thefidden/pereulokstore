@@ -17,7 +17,6 @@ const Root = styled.div`
     gap: 80px;
 
     font-family: 'Jost', serif;
-    background-color: var(--color-cyan);
 `
 
 export default function App() {

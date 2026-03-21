@@ -1,4 +1,6 @@
 :root {
+    background-color: var(--color-cyan);
+
     --color-cyan: #B1D9E1;
     --color-magenta: #7A89DC;
     --color-green: #2E9E6F;
