@@ -1,6 +1,6 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit"
-import type { Product } from "../interfaces/ProductInterface.ts";
-import { API } from "../conf.ts";
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
+import type { Product } from '../interfaces/ProductInterface.ts';
+import { API } from '../conf.ts';
 
 interface State {
     product: Product | null,
@@ -8,7 +8,8 @@ interface State {
 }
 
 export const fetchProduct = createAsyncThunk(
-    "product/fetchProduct",
+    'product/fetchProduct',
+
     async (productId: string): Promise<Product> => {
         const response = await fetch(`${API}/products/${productId}/`)
         const { id, name, type, description, price, images } = await response.json()
@@ -24,7 +25,7 @@ export const fetchProduct = createAsyncThunk(
 )
 
 export const ProductSlice = createSlice({
-    name: "product",
+    name: 'product',
 
     initialState: {
         product: null,
@@ -34,6 +35,7 @@ export const ProductSlice = createSlice({
     reducers: {},
 
     extraReducers: (builder) => {
+        // FETCH PRODUCT
         builder
             .addCase(fetchProduct.pending, (state) => {
                 state.loading = true
@@ -47,3 +49,5 @@ export const ProductSlice = createSlice({
             })
     }
 })
+
+export const productReducer = ProductSlice.reducer

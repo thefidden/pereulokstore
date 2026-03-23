@@ -1,7 +1,7 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit"
-import type { User } from "../interfaces/UserInterface.ts";
-import { API } from "../conf.ts";
-import { fetchAuthToken } from "../utils.ts";
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
+import type { User } from '../interfaces/UserInterface.ts';
+import { API } from '../conf.ts';
+import { fetchAuthToken } from '../utils.ts';
 
 interface State {
     user: User | null,
@@ -9,11 +9,11 @@ interface State {
 }
 
 export const fetchUser = createAsyncThunk(
-    "user/fetch",
+    'user/fetch',
     async (): Promise<User | null> => {
         const response = await fetch(`${API}/user/`, {
-            method: "GET",
-            credentials: "include"
+            method: 'GET',
+            credentials: 'include'
         })
 
         if (response.status === 204)
@@ -31,19 +31,20 @@ export const fetchUser = createAsyncThunk(
 )
 
 export const authenticateUser = createAsyncThunk(
-    "user/authenticate",
+    'user/authenticate',
     async (_, { dispatch }) => {
         const authToken = await fetchAuthToken()
         const authLink = `https://t.me/pereulokstorebot?start=${authToken}`
-        window.open(authLink, "_blank")
+
+        window.open(authLink, '_blank')
 
         return new Promise<void>((resolve) => {
             const interval = setInterval(async () => {
                 const response = await fetch(`${API}/user/authenticate/`, {
-                    method: "post",
-                    credentials: "include",
+                    method: 'POST',
+                    credentials: 'include',
                     headers: {
-                        "Content-Type": "application/json"
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
                         token: authToken
@@ -61,17 +62,17 @@ export const authenticateUser = createAsyncThunk(
 )
 
 export const deauthenticateUser = createAsyncThunk(
-    "user/deauthenticate",
+    'user/deauthenticate',
     async () => {
         await fetch(`${API}/user/deauthenticate`, {
-            method: "get",
-            credentials: "include"
+            method: 'GET',
+            credentials: 'include'
         })
     }
 )
 
 export const UserSlice = createSlice({
-    name: "user",
+    name: 'user',
 
     initialState: {
         user: null,
@@ -82,6 +83,7 @@ export const UserSlice = createSlice({
 
     extraReducers: (builder) => {
         builder
+            // FETCH USER
             .addCase(fetchUser.pending, (state) => {
                 state.loading = true
             })
@@ -90,11 +92,12 @@ export const UserSlice = createSlice({
                 state.loading = false
             })
             .addCase(fetchUser.rejected, (state) => {
-                console.log("fetchUser error")
+                console.log('fetchUser error')
                 state.user = null
                 state.loading = false
             })
 
+            // AUTHENTICATE USER
             .addCase(authenticateUser.pending, (state) => {
                 state.loading = true
             })
@@ -105,6 +108,7 @@ export const UserSlice = createSlice({
                 state.loading = false
             })
 
+            // DEAUTHENTICATE USER
             .addCase(deauthenticateUser.pending, (state) => {
                 state.loading = true
             })

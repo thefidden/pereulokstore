@@ -1,6 +1,10 @@
 # Корень
 Картинки товаров
 .idea
+client-react
+run-django.bat
+run-telegram-bot.bat
+run-vue.bat
 
 # Python
 \server\app\db.sqlite3

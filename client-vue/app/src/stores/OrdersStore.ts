@@ -57,7 +57,7 @@ export const useOrders = defineStore("orders", {
                     method: "POST",
                     credentials: "include",
                     headers: {
-                        "X-CSRFToken": getCookie("csrftoken")!!
+                        "X-CSRFToken": getCookie("csrftoken")!
                     }
                 })
                 const { order, formUrl } = await response.json()
