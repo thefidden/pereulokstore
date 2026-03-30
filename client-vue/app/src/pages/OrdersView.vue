@@ -42,7 +42,7 @@
         <div class="title">Список заказов</div>
 
         <div v-if="orders.length" v-for="order in ordersReversed" class="order">
-            <div class="orderId">Заказ: {{ order.id }}</div>
+            <div class="orderId">Заказ: {{ order.id.toUpperCase() }}</div>
             <div class="orderPrice">Сумма: {{ order.price }}₽</div>
             <div class="orderStatus">Статус: {{ orderStatusTranslation[order.status] }}</div>
 
