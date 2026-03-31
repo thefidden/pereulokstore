@@ -6,6 +6,7 @@ import { productReducer } from './slices/ProductSlice.ts';
 import { storeReducer } from './slices/StoreSlice.ts';
 import { ordersReducer } from './slices/OrdersSlice.ts';
 import { cartReducer } from './slices/CartSlice.ts';
+import { OrderPaymentStatusReducer } from "./slices/OrderPaymentStatus.tsx";
 
 export const store = configureStore({
     reducer: {
@@ -13,7 +14,8 @@ export const store = configureStore({
         product: productReducer,
         store: storeReducer,
         cart: cartReducer,
-        orders: ordersReducer
+        orders: ordersReducer,
+        orderPaymentStatus: OrderPaymentStatusReducer
     }
 })
 

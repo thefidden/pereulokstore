@@ -2,10 +2,11 @@ import styled from 'styled-components';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { useEffect } from 'react'
 
+import { useAppDispatch, useAppSelector } from './store.ts';
 import { fetchUser } from './slices/UserSlice.ts';
 import { fetchCart } from './slices/CartSlice.ts';
 import { fetchOrders } from './slices/OrdersSlice.ts';
-import { useAppDispatch, useAppSelector } from './store.ts';
+
 
 import StorePage from './pages/StorePage.tsx';
 import ProductPage from './pages/ProductPage.tsx';
@@ -38,9 +39,9 @@ export default function App() {
         dispatch(fetchOrders())
     }, [])
 
-    useEffect(() => console.log(user), [user])
-    useEffect(() => console.log(cart), [cart])
-    useEffect(() => console.log(orders), [orders])
+    // useEffect(() => console.log(user), [user])
+    // useEffect(() => console.log(cart), [cart])
+    // useEffect(() => console.log(orders), [orders])
 
     return (
         <Router>
@@ -49,7 +50,7 @@ export default function App() {
                 <Routes>
                     <Route path = "/" element = { <Navigate to = "store?type=suit" replace /> } />
                     <Route path = "/store" element = { <StorePage /> } />
-                    <Route path = "/product/:productUUID" element = { <ProductPage /> } />
+                    <Route path = "/products/:productUUID" element = { <ProductPage /> } />
                     <Route path = "/cart" element = { <CartPage /> } />
                     <Route path = "/orders" element = { <OrdersPage /> } />
                     <Route path = "/orders/:orderUUID/payment/check" element = { <OrderCheckPaymentPage /> } />

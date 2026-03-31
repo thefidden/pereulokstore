@@ -1,6 +1,9 @@
 import { API } from "./conf.ts";
+import { useAppSelector } from "./store.ts";
+import type { CartItem } from "./interfaces/CartItemInterface.ts";
+import type { Product } from "./interfaces/ProductInterface.ts";
 
-export function getCookie(name: string) {
+export function getCookie(name: string): string | null {
     let cookieValue = null
 
     if (document.cookie && document.cookie !== '') {
@@ -21,13 +24,12 @@ export function getCookie(name: string) {
 
 export async function fetchAuthToken() {
     try {
-        const response = await fetch(`${API}/auth-token/`, {
+        const response = await fetch(`${ API }/auth-token/`, {
             method: 'POST'
         })
         const { token } = await response.json()
         return token
-    }
-    catch (e) {
+    } catch (e) {
         console.log('fetchAuthToken error:', e)
     }
 }

@@ -23,7 +23,7 @@ export const fetchOrders = createAsyncThunk(
                 id: order.id,
                 price: order.price,
                 status: order.status,
-                items: order.products.map((orderItem: any) => (
+                items: order.products.map(orderItem => (
                     {
                         product: orderItem.product,
                         price: orderItem.price,
@@ -64,20 +64,6 @@ export const createOrder = createAsyncThunk(
     }
 )
 
-export const fetchPaymentStatus = createAsyncThunk(
-    'orders/fetchPaymentStatus',
-
-    async (
-        { orderId, bankOrderId }: { orderId: string, bankOrderId: string }
-    ): Promise<'successful' | 'failure'> => {
-        const response = await fetch(`${API}/orders/${orderId}/payment/check/?bankOrderId=${bankOrderId}`, {
-            credentials: 'include'
-        })
-        const { paymentStatus } = await response.json()
-        return paymentStatus
-    }
-)
-
 export const OrdersSlice = createSlice({
     name: 'orders',
 
@@ -113,17 +99,6 @@ export const OrdersSlice = createSlice({
             })
             .addCase(createOrder.rejected, (state) => {
                 state.orders = []
-                state.loading = false
-            })
-
-            // FETCH PAYMENT STATUS
-            .addCase(fetchPaymentStatus.pending, (state) => {
-                state.loading = true
-            })
-            .addCase(fetchPaymentStatus.fulfilled, (state) => {
-                state.loading = false
-            })
-            .addCase(fetchPaymentStatus.rejected, (state) => {
                 state.loading = false
             })
     }

@@ -22,7 +22,7 @@ export const fetchCart = createAsyncThunk(
     }
 )
 
-export const addItem = createAsyncThunk(
+export const addCartItem = createAsyncThunk(
     'cart/addItem',
 
     async (
@@ -43,7 +43,7 @@ export const addItem = createAsyncThunk(
     }
 )
 
-export const updateItem = createAsyncThunk(
+export const updateCartItem = createAsyncThunk(
     'cart/updateItem',
 
     async (
@@ -64,7 +64,7 @@ export const updateItem = createAsyncThunk(
     }
 )
 
-export const deleteItem = createAsyncThunk(
+export const deleteCartItem = createAsyncThunk(
     'cart/deleteItem',
 
     async (
@@ -89,11 +89,12 @@ export const emptyCart = createAsyncThunk(
 
         await Promise.all(
             cart.map(cartItem =>
-                dispatch(deleteItem({ cartItem }))
+                dispatch(deleteCartItem({ cartItem }))
             )
         )
     }
 )
+
 
 export const CartSlice = createSlice({
     name: 'cart',
@@ -121,22 +122,22 @@ export const CartSlice = createSlice({
             })
 
             // ADD ITEM
-            .addCase(addItem.pending, (state) => {
+            .addCase(addCartItem.pending, (state) => {
                 state.loading = true
             })
-            .addCase(addItem.fulfilled, (state, action) => {
+            .addCase(addCartItem.fulfilled, (state, action) => {
                 state.cart.push(action.payload)
                 state.loading = false
             })
-            .addCase(addItem.rejected, (state) => {
+            .addCase(addCartItem.rejected, (state) => {
                 state.loading = false
             })
 
             // UPDATE ITEM
-            .addCase(updateItem.pending, (state) => {
+            .addCase(updateCartItem.pending, (state) => {
                 state.loading = true
             })
-            .addCase(updateItem.fulfilled, (state, action) => {
+            .addCase(updateCartItem.fulfilled, (state, action) => {
                 const newItem = action.payload
                 state.cart = state.cart.map((oldItem: CartItem) =>
                     oldItem.id !== newItem.id
@@ -145,22 +146,22 @@ export const CartSlice = createSlice({
                 )
                 state.loading = false
             })
-            .addCase(updateItem.rejected, (state) => {
+            .addCase(updateCartItem.rejected, (state) => {
                 state.loading = false
             })
 
             // DELETE ITEM
-            .addCase(deleteItem.pending, (state) => {
+            .addCase(deleteCartItem.pending, (state) => {
                 state.loading = true
             })
-            .addCase(deleteItem.fulfilled, (state, action) => {
+            .addCase(deleteCartItem.fulfilled, (state, action) => {
                 const deletedItem = action.payload
                 state.cart = state.cart.filter((item: CartItem) =>
                     item.id !== deletedItem.id
                 )
                 state.loading = false
             })
-            .addCase(deleteItem.rejected, (state) => {
+            .addCase(deleteCartItem.rejected, (state) => {
                 state.loading = false
             })
 

@@ -1,11 +1,9 @@
 import styled from "styled-components";
-import type { CartItem } from "../interfaces/CartItemInterface.ts";
 import ProductCard from "./ProductCard.tsx";
-import { useAppDispatch } from "../store.ts";
-import { deleteCartItem, updateCartItem } from "../slices/CartSlice.ts";
+import type { OrderItem } from "../interfaces/OrderItemInterface.ts";
 
 interface CartItemCardProps {
-    cartItem: CartItem,
+    orderItem: OrderItem,
     animationDelay?: number
 }
 
@@ -100,44 +98,18 @@ const AmountControl = styled.div`
     }
 `
 
-export default function CartItemCard(
+export default function OrderItemCard(
     {
-        cartItem,
+        orderItem,
         animationDelay = 0
     }: CartItemCardProps
 ) {
-    const dispatch = useAppDispatch()
-
     return (
         <Root animationDelay={ animationDelay }>
-            <ProductCard product={ cartItem.product } playAnimation={ false } />
+            <ProductCard product={ orderItem.product } playAnimation={ false } />
 
             <AmountControl>
-                <div className="decreaseAmountButton"
-                     onClick={ () =>
-                         cartItem.amount - 1
-                             ? dispatch(updateCartItem({ cartItem: cartItem, amount: cartItem.amount - 1 }))
-                             : dispatch(deleteCartItem({ cartItem }))
-                     }>
-                    <svg width="15" height="3" viewBox="0 0 15 3">
-                        <line x1="1.5" y1="1.5" x2="13.5" y2="1.5" strokeWidth="3"
-                              strokeLinecap="round" />
-                    </svg>
-                </div>
-
-                <div className="amount">Кол-во: { cartItem.amount } шт.</div>
-
-                <div className="increaseAmountButton"
-                     onClick={ () =>
-                         dispatch(updateCartItem({ cartItem: cartItem, amount: cartItem.amount + 1 }))
-                     }>
-                    <svg width="15" height="15" viewBox="0 0 15 15">
-                        <line x1="7.5" y1="1.5" x2="7.5" y2="13.5" strokeWidth="3"
-                              strokeLinecap="round" />
-                        <line x1="1.5" y1="7.5" x2="13.5" y2="7.5" strokeWidth="3"
-                              strokeLinecap="round" />
-                    </svg>
-                </div>
+                <div className="amount">Кол-во: { orderItem.amount } шт.</div>
             </AmountControl>
         </Root>
     )
