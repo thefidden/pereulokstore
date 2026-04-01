@@ -3,6 +3,7 @@ import type { CartItem } from '../interfaces/CartItemInterface.ts';
 import { API } from '../conf.ts';
 import type { Product } from '../interfaces/ProductInterface.ts';
 import { getCookie } from '../utils.ts';
+import type { RootState } from "../store.ts";
 
 interface State {
     cart: Array<CartItem>,
@@ -13,7 +14,7 @@ export const fetchCart = createAsyncThunk(
     'cart/fetchCart',
 
     async (): Promise<Array<CartItem>> => {
-        const response = await fetch(`${API}/carts/`, {
+        const response = await fetch(`${ API }/carts/`, {
             method: 'GET',
             credentials: 'include'
         })
@@ -28,7 +29,7 @@ export const addCartItem = createAsyncThunk(
     async (
         { product }: { product: Product }
     ): Promise<CartItem> => {
-        const response = await fetch(`${API}/carts/`, {
+        const response = await fetch(`${ API }/carts/`, {
             method: 'POST',
             credentials: 'include',
             headers: {
@@ -49,7 +50,7 @@ export const updateCartItem = createAsyncThunk(
     async (
         { cartItem, amount }: { cartItem: CartItem, amount: number }
     ): Promise<CartItem> => {
-        const response = await fetch(`${API}/carts/${cartItem.id}/`, {
+        const response = await fetch(`${ API }/carts/${ cartItem.id }/`, {
             method: 'PATCH',
             credentials: 'include',
             headers: {
@@ -70,7 +71,7 @@ export const deleteCartItem = createAsyncThunk(
     async (
         { cartItem }: { cartItem: CartItem }
     ): Promise<CartItem> => {
-        const response = await fetch(`${API}/carts/${cartItem.id}/`, {
+        const response = await fetch(`${ API }/carts/${ cartItem.id }/`, {
             method: 'DELETE',
             credentials: 'include',
             headers: {
@@ -85,7 +86,7 @@ export const emptyCart = createAsyncThunk(
     'cart/emptyCart',
 
     async (_, { dispatch, getState }) => {
-        const { cart } = getState() as State
+        const { cart } = (getState() as RootState).cart
 
         await Promise.all(
             cart.map(cartItem =>
@@ -94,7 +95,6 @@ export const emptyCart = createAsyncThunk(
         )
     }
 )
-
 
 export const CartSlice = createSlice({
     name: 'cart',
@@ -141,8 +141,8 @@ export const CartSlice = createSlice({
                 const newItem = action.payload
                 state.cart = state.cart.map((oldItem: CartItem) =>
                     oldItem.id !== newItem.id
-                    ? oldItem
-                    : newItem
+                        ? oldItem
+                        : newItem
                 )
                 state.loading = false
             })

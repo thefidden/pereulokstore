@@ -5,7 +5,7 @@ import type { CartItem } from "../interfaces/CartItemInterface.ts";
 import CartItemCard from "../components/CartItemCard.tsx";
 import { createOrder } from "../slices/OrdersSlice.ts";
 import { useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import OrderPaymentStatusBox from "../components/OrderPaymentStatusBox.tsx";
 
 const Root = styled.div`
@@ -163,14 +163,16 @@ export default function CartPage() {
 
     const [orderPaymentStatusBoxVisible, setOrderPaymentStatusBoxVisible] = useState(!!location.state?.paymentStatus)
     const { cart, loading: cartLoading } = useAppSelector(state => state.cart)
-    const totalCartPrice = useAppSelector(state =>
-        state.cart.cart.reduce((accumulator: number, cartItem: CartItem) =>
-                accumulator + cartItem.product.price * cartItem.amount,
-            0
-        )
+    const { loading: ordersLoading } = useAppSelector(state => state.orders)
+    const totalCartPrice = useMemo(() =>
+            cart.reduce((accumulator: number, cartItem: CartItem) =>
+                    accumulator + cartItem.product.price * cartItem.amount,
+                0
+            ),
+        [cart]
     )
 
-    if (cartLoading)
+    if (cartLoading || ordersLoading)
         return <Loader />
 
     return (

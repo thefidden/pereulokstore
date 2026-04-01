@@ -86,7 +86,7 @@ const Box = styled.div<BoxProps>`
     user-select: none;
 
     will-change: opacity, transform, filter;
-    animation: 'fadeInBox 0.4s ease-out forwards';
+    animation: fadeInBox 0.4s ease-out forwards;
 
     .title {
         font-size: 48px;
@@ -179,7 +179,7 @@ export default function OrderPaymentStatusBox(
 
     function closeBox() {
         setClosingAnimation(true)
-        setTimeout(() => setOrderPaymentStatusBoxVisible(true), 300)
+        setTimeout(() => setOrderPaymentStatusBoxVisible(false), 300)
     }
 
     return createPortal(

@@ -1,6 +1,6 @@
 import styled from "styled-components";
 import { useParams } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
 import { useAppDispatch, useAppSelector } from "../store.ts";
 import { HOST } from "../conf.ts";
@@ -179,17 +179,19 @@ export default function ProductPage() {
     const dispatch = useAppDispatch()
 
     const { productUUID } = useParams()
-    const { loading: userLoading } = useAppSelector(state => state.user)
     const { product, loading: productLoading } = useAppSelector(state => state.product)
-    const cartItem: CartItem = useAppSelector(state =>
-        state.cart.cart.find((item: CartItem) => item.product.id === product.id)
+    const { cart, loading: cartLoading } = useAppSelector(state => state.cart)
+
+    const cartItem: CartItem = useMemo(() =>
+        cart.find((item: CartItem) => item.product.id === product?.id),
+        [product, cart]
     )
 
     useEffect(() => {
         dispatch(fetchProduct(productUUID))
-    }, [productUUID])
+    }, [])
 
-    if (userLoading || productLoading)
+    if (productLoading || cartLoading)
         return <Loader />
 
     return (

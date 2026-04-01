@@ -3,6 +3,7 @@ import type { Order } from '../interfaces/OrderInterface.ts';
 import { API } from '../conf.ts';
 import type { OrderItem } from '../interfaces/OrderItemInterface.ts';
 import { getCookie } from '../utils.ts';
+import type { RootState } from "../store.ts";
 
 interface State {
     orders: Array<Order>,
@@ -13,7 +14,7 @@ export const fetchOrders = createAsyncThunk(
     'orders/fetchOrders',
 
     async (): Promise<Array<Order>> => {
-        const response = await fetch(`${API}/orders/`, {
+        const response = await fetch(`${ API }/orders/`, {
             method: 'GET',
             credentials: 'include'
         })
@@ -39,7 +40,7 @@ export const createOrder = createAsyncThunk(
     'orders/createOrder',
 
     async (): Promise<Order> => {
-        const response = await fetch(`${API}/orders/`, {
+        const response = await fetch(`${ API }/orders/`, {
             method: 'POST',
             credentials: 'include',
             headers: {
@@ -47,7 +48,7 @@ export const createOrder = createAsyncThunk(
             }
         })
         const { order, formUrl } = await response.json()
-        window.open(formUrl, '_blank')
+        window.open(formUrl, 'payment', 'width=800, height=800')
 
         return {
             id: order.id,

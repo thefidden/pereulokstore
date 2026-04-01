@@ -161,6 +161,8 @@ export default function OrdersPage() {
     const { orders, loading: ordersLoading } = useAppSelector(state => state.orders)
     const [orderPaymentStatusBoxVisible, setOrderPaymentStatusBoxVisible] = useState(!!location.state?.paymentStatus)
 
+    useEffect(() => console.log(location.state), [])
+
     if (ordersLoading)
         return <Loader />
 
