@@ -1,9 +1,7 @@
 import os
-import requests
-import pprint
 
+import requests
 from django.conf import settings
-from telebot import TeleBot
 from telebot.async_telebot import AsyncTeleBot
 from telebot.types import UserProfilePhotos, File
 

@@ -1,4 +1,5 @@
 import io
+import pprint
 from uuid import UUID
 
 from django.contrib.auth import login, logout
@@ -11,8 +12,8 @@ from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework import viewsets
-from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.decorators import action, permission_classes
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
 
@@ -27,6 +28,11 @@ from .utils import register_order, get_order_status
 # noinspection PyMethodMayBeStatic,PyUnusedLocal
 class Products(viewsets.ViewSet):
     serializer_class = ProductSerializer
+
+    # def get_permissions(self):
+    #     if self.action in ['create', 'delete', 'partial_update']:
+    #         return [IsAdminUser()]
+    #     return [AllowAny()]
 
     @action(methods = ['get'], detail = False)
     def list(self, request: Request) -> Response:
@@ -66,6 +72,35 @@ class Products(viewsets.ViewSet):
         else:
             return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
 
+    @action(methods = ['delete'], detail = True, permission_classes = [IsAdminUser])
+    def delete(self, request: Request, pk) -> Response:
+        product = get_object_or_404(Product, id = pk)
+        product.delete()
+        return Response(
+            f"Product {product.id} was deleted from database",
+            status = status.HTTP_204_NO_CONTENT
+        )
+
+    @action(methods = ['patch'], detail = True, permission_classes = [IsAdminUser])
+    def partial_update(self, request: Request, pk) -> Response:
+        # Поля для обновления
+        name = request.data.get('name')
+        new_type = request.data.get('type')
+        price = request.data.get('price')
+        description = request.data.get('description')
+
+        data: dict[str, str] = dict()
+
+        if name is not None: data['name'] = name
+        if new_type is not None: data['type'] = new_type
+        if price is not None: data['price'] = price
+        if description is not None: data['description'] = description
+
+        product: Product = get_object_or_404(Product, id = pk)
+        serializer = ProductSerializer(product, data = data, partial = True)
+        serializer.is_valid()
+        return Response(data = serializer.data, status = status.HTTP_200_OK)
+
 
 # noinspection PyMethodMayBeStatic,PyUnusedLocal
 class Carts(viewsets.ViewSet):
@@ -75,6 +110,9 @@ class Carts(viewsets.ViewSet):
     def list(self, request: Request) -> Response:
         # Поля для фильтров
         user = request.user
+
+        if user.is_anonymous:
+            return Response(data = [], status = status.HTTP_204_NO_CONTENT)
 
         cart_items = Cart.objects.all()
         if user is not None: cart_items = cart_items.filter(user = user)
@@ -142,6 +180,9 @@ class Orders(viewsets.ViewSet):
         product = request.query_params.get('product')
         price_min = request.query_params.get('price_min')
         price_max = request.query_params.get('price_max')
+
+        if request.user.is_anonymous:
+            return Response(data = [], status = status.HTTP_204_NO_CONTENT)
 
         orders = Order.objects.all()
         if user: orders = orders.filter(user = user)
