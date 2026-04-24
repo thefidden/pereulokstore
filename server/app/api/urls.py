@@ -4,7 +4,11 @@ from .views import *
 
 urlpatterns = [
     path('products/', Products.as_view({'get': 'list', 'post': 'create'})),
-    path('products/<uuid:pk>/', Products.as_view({'get': 'retrieve', 'delete': 'delete', 'patch': 'partial_update'})),
+    path(
+        'products/<uuid:pk>/',
+        Products.as_view({'get': 'retrieve', 'delete': 'delete', 'patch': 'partial_update'}),
+        name = 'product-detail'
+    ),
 
     path('carts/', Carts.as_view({'get': 'list', 'post': 'create'})),
     path('carts/<uuid:pk>/', Carts.as_view({'get': 'retrieve', 'patch': 'partial_update', 'delete': 'delete'})),

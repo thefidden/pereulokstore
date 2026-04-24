@@ -20,10 +20,11 @@ class ProductSerializer(serializers.ModelSerializer):
         child = serializers.ImageField(allow_empty_file = False, use_url = False),
         write_only = True
     )
+    link = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
-        fields = ['id', 'type', 'name', 'price', 'description', 'images', 'uploaded_images']
+        fields = ['id', 'type', 'name', 'price', 'description', 'images', 'uploaded_images', 'link']
 
     def create(self, validated_data) -> Product:
         uploaded_images = validated_data.pop('uploaded_images')
@@ -36,6 +37,9 @@ class ProductSerializer(serializers.ModelSerializer):
 
     def get_images(self, obj):
         return [image.image.url for image in obj.images.all()]
+
+    def get_link(self, obj):
+        return obj.get_absolute_url()
 
 
 class AuthenticationTokenSerializer(serializers.ModelSerializer):
@@ -57,10 +61,11 @@ class CartSerializer(serializers.ModelSerializer):
         source = 'product',
         write_only = True
     )
+    total_price = serializers.IntegerField(read_only = True)
 
     class Meta:
         model = Cart
-        fields = ['id', 'user', 'product', 'product_id', 'amount']
+        fields = ['id', 'user', 'product', 'product_id', 'amount', 'total_price']
 
 
 class OrderProductSerializer(serializers.ModelSerializer):

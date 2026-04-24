@@ -12,8 +12,8 @@ from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework import viewsets
-from rest_framework.decorators import action, permission_classes
-from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.request import Request
 from rest_framework.response import Response
 
@@ -28,11 +28,6 @@ from .utils import register_order, get_order_status
 # noinspection PyMethodMayBeStatic,PyUnusedLocal
 class Products(viewsets.ViewSet):
     serializer_class = ProductSerializer
-
-    # def get_permissions(self):
-    #     if self.action in ['create', 'delete', 'partial_update']:
-    #         return [IsAdminUser()]
-    #     return [AllowAny()]
 
     @action(methods = ['get'], detail = False)
     def list(self, request: Request) -> Response:
@@ -110,13 +105,7 @@ class Carts(viewsets.ViewSet):
     def list(self, request: Request) -> Response:
         # Поля для фильтров
         user = request.user
-
-        if user.is_anonymous:
-            return Response(data = [], status = status.HTTP_204_NO_CONTENT)
-
-        cart_items = Cart.objects.all()
-        if user is not None: cart_items = cart_items.filter(user = user)
-
+        cart_items = Cart.objects.user_items(user).include_total_price()
         serializer = CartSerializer(cart_items, many = True)
         data = serializer.data
 
@@ -175,23 +164,11 @@ class Orders(viewsets.ViewSet):
 
     @action(methods = ['get'], detail = False, permission_classes = [IsAuthenticated])
     def list(self, request: Request) -> Response:
-        # Поля для фильтров
-        user = request.query_params.get('user')
-        product = request.query_params.get('product')
-        price_min = request.query_params.get('price_min')
-        price_max = request.query_params.get('price_max')
-
-        if request.user.is_anonymous:
-            return Response(data = [], status = status.HTTP_204_NO_CONTENT)
-
-        orders = Order.objects.all()
-        if user: orders = orders.filter(user = user)
-        if product: orders = orders.filter(product = product)
-        if price_min: orders = orders.filter(price__gte = price_min)
-        if price_max: orders = orders.filter(price__lt = price_max)
-
+        user = request.user
+        orders = Order.objects.user_orders(user)
         serializer = OrderSerializer(orders, many = True)
-        return Response(data = serializer.data, status = status.HTTP_200_OK)
+        return Response(data = serializer.data,
+                        status = status.HTTP_200_OK if serializer.data else status.HTTP_204_NO_CONTENT)
 
     @action(methods = ['post'], detail = False, permission_classes = [IsAuthenticated])
     def create(self, request: Request) -> Response:
@@ -291,6 +268,9 @@ class UserMethods(viewsets.ViewSet):
             }
         )
 
+        if request.user.is_authenticated:
+            UserMethods.deauthenticate()
+
         request.session.create()
         login(request, user)
         authentication_request.token.delete()
@@ -335,8 +315,8 @@ class AuthenticationTokenView(viewsets.ViewSet):
 
     @action(methods = ['post'], detail = False)
     def create(self, request: Request) -> Response:
-        if request.user.is_authenticated:
-            return Response(status.HTTP_400_BAD_REQUEST)
+        # if request.user.is_authenticated:
+        #     return Response(status.HTTP_400_BAD_REQUEST)
 
         auth_token: AuthenticationToken = AuthenticationToken.objects.create()
         return Response(data = {'token': auth_token.id}, status = status.HTTP_201_CREATED)
