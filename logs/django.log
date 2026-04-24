@@ -1,4 +1,0 @@
-2026-04-23 09:05:09.855: 2026-04-23 12:05:09,856 INFO     Starting server at tcp:port=8000:interface=127.0.0.1
-2026-04-23 09:05:09.857: 2026-04-23 12:05:09,856 INFO     HTTP/2 support not enabled (install the http2 and tls Twisted extras)
-2026-04-23 09:05:09.857: 2026-04-23 12:05:09,856 INFO     Configuring endpoint tcp:port=8000:interface=127.0.0.1
-2026-04-23 09:05:09.857: 2026-04-23 12:05:09,857 INFO     Listening on TCP address 127.0.0.1:8000
