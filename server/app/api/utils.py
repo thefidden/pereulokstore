@@ -10,6 +10,10 @@ def get_product_image_path(instance, filename):
     return os.path.join('products', f'{instance.product.id}', f'{instance.id}.jpg')
 
 
+def get_report_file_path(instance):
+    return os.path.join(settings.REPORTS_ROOT, f'{instance.id}')
+
+
 def get_user_image_path(instance, filename):
     return os.path.join('users', f'{instance.user.id}.jpg')
 
@@ -42,6 +46,7 @@ def register_order(order: 'Order') -> str:
 
     return response.get('formUrl')
 
+
 def get_order_status(bank_order_id: str):
     # Значения параметра orderStatus (статус оплаты)
     # 0 - заказ зарегистрирован, но не оплачен;
@@ -61,6 +66,3 @@ def get_order_status(bank_order_id: str):
     response = request.json()
     order_status: int = response.get('orderStatus')
     return order_status
-
-
-

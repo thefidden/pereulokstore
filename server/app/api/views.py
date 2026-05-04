@@ -1,15 +1,15 @@
 import io
-import pprint
 from uuid import UUID
 
 from django.contrib.auth import login, logout
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, AbstractUser, AnonymousUser
 from django.contrib.postgres.search import TrigramSimilarity
 from django.contrib.sessions.backends.base import SessionBase
 from django.core.files import File
 from django.db.models import Q, QuerySet
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.decorators import action
@@ -17,6 +17,7 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from .filters import ProductFilter
 from .models import Product, AuthenticationRequest, Cart, Order, AuthenticationToken, UserImage
 from .serializer import (
     ProductSerializer, AuthenticationRequestSerializer, CartSerializer, OrderSerializer, AuthenticationTokenSerializer,
@@ -28,27 +29,19 @@ from .utils import register_order, get_order_status
 # noinspection PyMethodMayBeStatic,PyUnusedLocal
 class Products(viewsets.ViewSet):
     serializer_class = ProductSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = ProductFilter
 
     @action(methods = ['get'], detail = False)
     def list(self, request: Request) -> Response:
-        # Поля для фильтров
-        products_type = request.query_params.get('type')
-        name = request.query_params.get('name')
-        price_min = request.query_params.get('price_min')
-        price_max = request.query_params.get('price_max')
+        products = Product.objects.all().optimized()
+        filterset = ProductFilter(request.query_params, queryset = products)
 
-        products = Product.objects.all()
-        if products_type is not None: products = products.filter(type = products_type)
-        if price_min is not None: products = products.filter(price__gte = price_min)
-        if price_max is not None: products = products.filter(price__lt = price_max)
-        if name is not None: products = (
-            products
-            .annotate(similarity = TrigramSimilarity('name', name))
-            .filter(Q(name__icontains = name) | Q(similarity__gt = 0.2))
-            .order_by('-similarity')
-        )
+        if not filterset.is_valid():
+            return Response(filterset.errors, status = status.HTTP_400_BAD_REQUEST)
 
-        serializer = ProductSerializer(products, many = True)
+        products_filtered = filterset.qs
+        serializer = ProductSerializer(products_filtered, many = True)
         return Response(serializer.data, status = status.HTTP_200_OK)
 
     @action(methods = ['get'], detail = True)
@@ -105,7 +98,8 @@ class Carts(viewsets.ViewSet):
     def list(self, request: Request) -> Response:
         # Поля для фильтров
         user = request.user
-        cart_items = Cart.objects.user_items(user).include_total_price()
+
+        cart_items = Cart.objects.user_items(user).include_total_price().optimized()
         serializer = CartSerializer(cart_items, many = True)
         data = serializer.data
 
@@ -145,7 +139,7 @@ class Carts(viewsets.ViewSet):
 
     @action(methods = ['delete'], detail = True, permission_classes = [IsAuthenticated])
     def delete(self, request: Request, pk) -> Response:
-        user: User = request.user
+        user: AbstractUser | AnonymousUser = request.user
         cart_item = get_object_or_404(Cart, pk = pk)
 
         if cart_item.user != request.user:
@@ -165,14 +159,15 @@ class Orders(viewsets.ViewSet):
     @action(methods = ['get'], detail = False, permission_classes = [IsAuthenticated])
     def list(self, request: Request) -> Response:
         user = request.user
-        orders = Order.objects.user_orders(user)
+
+        orders = Order.objects.user_orders(user).optimized()
         serializer = OrderSerializer(orders, many = True)
         return Response(data = serializer.data,
                         status = status.HTTP_200_OK if serializer.data else status.HTTP_204_NO_CONTENT)
 
     @action(methods = ['post'], detail = False, permission_classes = [IsAuthenticated])
     def create(self, request: Request) -> Response:
-        user: User = request.user
+        user: AbstractUser | AnonymousUser = request.user
 
         cart_items: QuerySet[Cart] = Cart.objects.all().filter(user = user)
         added_products: list[dict] = [
@@ -203,7 +198,7 @@ class Orders(viewsets.ViewSet):
 
     @action(methods = ['get'], detail = True, permission_classes = [IsAuthenticated])
     def retrieve(self, request: Request, pk) -> Response:
-        user: User = request.user
+        user: AbstractUser | AnonymousUser = request.user
         order = get_object_or_404(Order, pk = pk)
 
         if user != order.user:
@@ -214,7 +209,7 @@ class Orders(viewsets.ViewSet):
 
     @action(methods = ['delete'], detail = True, permission_classes = [IsAuthenticated])
     def delete(self, request: Request, pk) -> Response:
-        user: User = request.user
+        user: AbstractUser | AnonymousUser = request.user
         order = get_object_or_404(Order, pk = pk)
 
         if user != order.user:
@@ -286,7 +281,7 @@ class UserMethods(viewsets.ViewSet):
 
     @action(methods = ['get'], detail = False, permission_classes = [IsAuthenticated])
     def empty_user_cart(self, request: Request) -> Response:
-        user: User = request.user
+        user: AbstractUser | AnonymousUser = request.user
         cart_items = Cart.objects.all().filter(user = user)
 
         for cart_item in cart_items:
@@ -300,7 +295,7 @@ class UserView(viewsets.ViewSet):
 
     @action(methods = ['get'], detail = True)
     def retrieve(self, request: Request) -> Response:
-        user: User = request.user
+        user: AbstractUser | AnonymousUser = request.user
         is_authenticated: bool = user.is_authenticated
 
         if not is_authenticated:
@@ -321,7 +316,7 @@ class AuthenticationTokenView(viewsets.ViewSet):
         auth_token: AuthenticationToken = AuthenticationToken.objects.create()
         return Response(data = {'token': auth_token.id}, status = status.HTTP_201_CREATED)
 
-    @action(methods = ['destroy'], detail = True)
+    @action(methods = ['delete'], detail = True)
     def destroy(self, request: Request, pk: UUID) -> Response:
         authentication_token = get_object_or_404(AuthenticationToken, pk)
         authentication_token.delete()
@@ -358,7 +353,7 @@ class AuthenticationRequestView(viewsets.ViewSet):
         serializer = AuthenticationRequestSerializer(authentication_request)
         return Response(serializer.data, status = status.HTTP_200_OK)
 
-    @action(methods = ['destroy'], detail = True)
+    @action(methods = ['delete'], detail = True)
     def destroy(self, request: Request, pk: UUID) -> Response:
         authentication_request = get_object_or_404(AuthenticationRequest, pk = pk)
         authentication_request.delete()

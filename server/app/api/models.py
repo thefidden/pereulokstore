@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.urls import reverse
 from django.db.models import Avg, Count, Max, Min, F
 
-from .utils import get_product_image_path, get_user_image_path
+from .utils import get_product_image_path, get_user_image_path, get_report_file_path
 
 
 class ProductQuerySet(models.QuerySet):
@@ -20,8 +20,23 @@ class ProductQuerySet(models.QuerySet):
             .order_by('type', 'name')
         )
 
+    def filter_name_contains(self, name: str):
+        return self.filter(name__contains = name)
+
+    def summary_values(self):
+        return self.values('id', 'name', 'type', 'price', 'source_url')
+
+    def summary_values_list(self):
+        return self.values_list('id', 'name', 'source_url')
+
+    def update_source_url(self, product_id, source_url: str):
+        return self.filter(id = product_id).update(source_url = source_url)
+
     def with_images_count(self):
         return self.annotate(images_count = Count('images', distinct = True))
+
+    def optimized(self):
+        return self.prefetch_related('images', 'tags')
 
 
 class ProductManager(models.Manager.from_queryset(ProductQuerySet)):
@@ -46,10 +61,13 @@ class Product(models.Model):
     id = models.UUIDField(primary_key = True, default = uuid.uuid4, editable = False, unique = True)
     type = models.CharField(choices = PRODUCT_TYPES, max_length = 20, verbose_name = 'Категория')
     name = models.CharField(max_length = 50, editable = True, verbose_name = 'Название')
+    slug = models.SlugField(max_length = 50, unique = True, null = True, blank = True, verbose_name = 'Slug')
     price = models.IntegerField(editable = True, validators = [MinValueValidator(0), MaxValueValidator(100_000)],
                                 verbose_name = 'Цена')
     description = models.CharField(editable = True, max_length = 1000, verbose_name = 'Описание')
+    source_url = models.URLField(null = True, blank = True, verbose_name = 'Ссылка на источник')
     creation_date = models.DateTimeField(default = timezone.now, verbose_name = 'Дата создания')
+    tags = models.ManyToManyField('Tag', through = 'ProductTag', related_name = 'products', verbose_name = 'Теги')
 
     class Meta:
         verbose_name = 'Товар'
@@ -61,6 +79,25 @@ class Product(models.Model):
 
     def __str__(self) -> str:
         return f'{self.name}'
+
+    def save(self, *args, **kwargs):
+        is_new = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if is_new:
+            update_fields = []
+
+            if not self.slug:
+                self.slug = f'{self.id}'
+                update_fields.append('slug')
+
+            if not self.source_url:
+                self.source_url = f'https://pereulokstore/products/{self.id}/'
+                update_fields.append('source_url')
+
+            if update_fields:
+                super().save(update_fields = update_fields)
 
     def get_absolute_url(self):
         return reverse('product-detail', kwargs = {'pk': self.id})
@@ -104,6 +141,9 @@ class CartQuerySet(models.QuerySet):
     def include_total_price(self):
         return self.annotate(total_price = F('amount') * F('product__price'))
 
+    def optimized(self):
+        return self.select_related('user', 'product')
+
 
 class CartManager(models.Manager.from_queryset(CartQuerySet)):
     pass
@@ -137,6 +177,12 @@ class Cart(models.Model):
 class OrderQuerySet(models.QuerySet):
     def user_orders(self, user: User):
         return self.filter(user = user)
+
+    def optimized(self):
+        return self.select_related('user').prefetch_related(
+            'products__product__images',
+            'products__product__tags'
+        )
 
 
 class OrderManager(models.Manager.from_queryset(OrderQuerySet)):
@@ -201,3 +247,65 @@ class UserImage(models.Model):
             pass
 
         super().save(*args, **kwargs)
+
+
+class Tag(models.Model):
+    """Теги для товаров (например: новинка, скидка, популярное)"""
+    name = models.CharField(max_length = 50, unique = True, verbose_name = 'Название')
+    slug = models.SlugField(max_length = 50, unique = True, blank = True, verbose_name = 'Slug')
+
+    class Meta:
+        verbose_name = 'Тег'
+        verbose_name_plural = 'Теги'
+        ordering = ['name']
+
+    def __str__(self) -> str:
+        return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            from django.utils.text import slugify
+            import uuid
+            # Генерируем slug из имени + уникальный суффикс для кириллицы
+            base_slug = slugify(self.name) or f'tag-{uuid.uuid4().hex[:8]}'
+            self.slug = base_slug
+
+        super().save(*args, **kwargs)
+
+
+class ProductTag(models.Model):
+    """Промежуточная модель для связи Product и Tag с дополнительными полями"""
+    product = models.ForeignKey(Product, on_delete = models.CASCADE, verbose_name = 'Товар')
+    tag = models.ForeignKey(Tag, on_delete = models.CASCADE, verbose_name = 'Тег')
+    added_at = models.DateTimeField(auto_now_add = True, verbose_name = 'Дата добавления')
+    priority = models.IntegerField(default = 0, verbose_name = 'Приоритет отображения')
+
+    class Meta:
+        verbose_name = 'Тег товара'
+        verbose_name_plural = 'Теги товаров'
+        unique_together = [['product', 'tag']]
+        ordering = ['-priority', '-added_at']
+
+    def __str__(self) -> str:
+        return f'{self.product.name} - {self.tag.name}'
+
+
+class ProductReport(models.Model):
+    file = models.FileField(upload_to = 'reports', verbose_name = 'PDF-отчет')
+    created_at = models.DateTimeField(default = timezone.now, verbose_name = 'Дата создания')
+    created_by = models.ForeignKey(
+        User,
+        on_delete = models.SET_NULL,
+        null = True,
+        blank = True,
+        related_name = 'product_reports',
+        verbose_name = 'Создано пользователем'
+    )
+
+    class Meta:
+        verbose_name = 'Отчет по товарам'
+        verbose_name_plural = 'Отчеты по товарам'
+        ordering = ['-created_at']
+
+    def __str__(self) -> str:
+        return f'Отчет от {self.created_at:%d-%m-%Y %H:%M}'
