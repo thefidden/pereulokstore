@@ -1,0 +1,9 @@
+# Python
+venv
+
+# Django
+db.sqlite3
+app/settings.py
+/media
+*__pycache__*
+*.pyc
