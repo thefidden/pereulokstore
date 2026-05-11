@@ -17,6 +17,8 @@ from django.utils import timezone
 from django.conf import settings
 from .models import ProductReport
 
+from import_export.admin import ImportExportModelAdmin
+
 from .models import Product, ProductImage, Cart, Order, OrderProduct, Tag, ProductTag, ProductReport
 
 
@@ -35,7 +37,7 @@ class ProductTagInline(admin.TabularInline):
 
 
 @admin.register(Product)
-class ProductAdmin(admin.ModelAdmin):
+class ProductAdmin(ImportExportModelAdmin):
     list_display = ('name', 'type', 'price', 'creation_date', 'link')
     list_display_links = ('name',)
     list_filter = ('type', 'price', 'creation_date')
@@ -108,7 +110,7 @@ class ProductAdmin(admin.ModelAdmin):
 
 
 @admin.register(Tag)
-class TagAdmin(admin.ModelAdmin):
+class TagAdmin(ImportExportModelAdmin):
     list_display = ('name', 'slug')
     list_display_links = ('name',)
     search_fields = ('name', 'slug')
@@ -116,7 +118,7 @@ class TagAdmin(admin.ModelAdmin):
 
 
 @admin.register(Cart)
-class CartAdmin(admin.ModelAdmin):
+class CartAdmin(ImportExportModelAdmin):
     list_display = ('user', 'product', 'amount', 'creation_date')
     list_display_links = ('user', 'product')
     list_filter = ('user', 'product')
@@ -133,7 +135,7 @@ class OrderProductInline(admin.TabularInline):
 
 
 @admin.register(Order)
-class OrderAdmin(admin.ModelAdmin):
+class OrderAdmin(ImportExportModelAdmin):
     list_display = ('id', 'user', 'status', 'price', 'datetime', 'products_count')
     list_display_links = ('id', 'user')
     list_filter = ('status', 'datetime')
@@ -151,7 +153,7 @@ class OrderAdmin(admin.ModelAdmin):
 
 
 @admin.register(OrderProduct)
-class OrderProductAdmin(admin.ModelAdmin):
+class OrderProductAdmin(ImportExportModelAdmin):
     list_display = ('order', 'product', 'price', 'amount')
     list_display_links = ('order', 'product')
     list_filter = ('order', 'product')
@@ -163,7 +165,7 @@ admin.site.unregister(User)
 
 
 @admin.register(User)
-class CustomUserAdmin(UserAdmin):
+class CustomUserAdmin(ImportExportModelAdmin):
     list_display = ('username', 'first_name', 'last_name', 'is_staff', 'is_active')
     list_filter = ('is_staff', 'is_active', 'is_superuser', 'groups')
     search_fields = ('username', 'first_name', 'last_name', 'email')
@@ -171,7 +173,7 @@ class CustomUserAdmin(UserAdmin):
 
 
 @admin.register(ProductReport)
-class ProductReportAdmin(admin.ModelAdmin):
+class ProductReportAdmin(ImportExportModelAdmin):
     list_display = ('file', 'created_at', 'created_by')
     list_filter = ('created_at', 'created_by')
     raw_id_fields = ('created_by',)

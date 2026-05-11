@@ -3,10 +3,9 @@ from uuid import UUID
 
 from django.contrib.auth import login, logout
 from django.contrib.auth.models import User, AbstractUser, AnonymousUser
-from django.contrib.postgres.search import TrigramSimilarity
 from django.contrib.sessions.backends.base import SessionBase
 from django.core.files import File
-from django.db.models import Q, QuerySet
+from django.db.models import QuerySet
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
@@ -16,6 +15,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.request import Request
 from rest_framework.response import Response
+from silk.profiling.profiler import silk_profile
 
 from .filters import ProductFilter
 from .models import Product, AuthenticationRequest, Cart, Order, AuthenticationToken, UserImage
@@ -32,7 +32,7 @@ class Products(viewsets.ViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_class = ProductFilter
 
-    @action(methods = ['get'], detail = False)
+    @silk_profile(name = 'Product List')
     def list(self, request: Request) -> Response:
         products = Product.objects.all().optimized()
         filterset = ProductFilter(request.query_params, queryset = products)
@@ -44,14 +44,18 @@ class Products(viewsets.ViewSet):
         serializer = ProductSerializer(products_filtered, many = True)
         return Response(serializer.data, status = status.HTTP_200_OK)
 
-    @action(methods = ['get'], detail = True)
+    @silk_profile(name = 'Product Retrieve')
     def retrieve(self, request: Request, pk) -> Response:
         product = get_object_or_404(Product, id = pk)
         serializer = ProductSerializer(product)
         return Response(serializer.data, status = status.HTTP_200_OK)
 
-    @action(methods = ['post'], detail = False, permission_classes = [IsAdminUser])
+    @silk_profile(name = 'Product Create')
     def create(self, request: Request) -> Response:
+        # Проверка прав администратора
+        if not request.user.is_authenticated or not request.user.is_staff:
+            return Response(status = status.HTTP_403_FORBIDDEN)
+        
         serializer = ProductSerializer(data = request.data)
 
         if serializer.is_valid():
@@ -60,7 +64,7 @@ class Products(viewsets.ViewSet):
         else:
             return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
 
-    @action(methods = ['delete'], detail = True, permission_classes = [IsAdminUser])
+    @silk_profile(name = 'Product Delete')
     def delete(self, request: Request, pk) -> Response:
         product = get_object_or_404(Product, id = pk)
         product.delete()
@@ -69,7 +73,7 @@ class Products(viewsets.ViewSet):
             status = status.HTTP_204_NO_CONTENT
         )
 
-    @action(methods = ['patch'], detail = True, permission_classes = [IsAdminUser])
+    @silk_profile(name = 'Product Update')
     def partial_update(self, request: Request, pk) -> Response:
         # Поля для обновления
         name = request.data.get('name')
@@ -94,10 +98,13 @@ class Products(viewsets.ViewSet):
 class Carts(viewsets.ViewSet):
     serializer_class = CartSerializer
 
-    @action(methods = ['get'], detail = False, permission_classes = [IsAuthenticated])
+    @silk_profile(name = 'Cart List')
     def list(self, request: Request) -> Response:
         # Поля для фильтров
         user = request.user
+
+        if not user.is_authenticated:
+            return Response(data = [], status = status.HTTP_204_NO_CONTENT)
 
         cart_items = Cart.objects.user_items(user).include_total_price().optimized()
         serializer = CartSerializer(cart_items, many = True)
@@ -105,8 +112,15 @@ class Carts(viewsets.ViewSet):
 
         return Response(data = data, status = status.HTTP_200_OK)
 
-    @action(methods = ['post'], detail = False, permission_classes = [IsAuthenticated])
+    @silk_profile(name = 'Cart Create')
     def create(self, request: Request) -> Response:
+        # Проверка авторизации
+        if not request.user.is_authenticated:
+            return Response(
+                {'detail': 'Authentication credentials were not provided.'},
+                status = status.HTTP_403_FORBIDDEN
+            )
+        
         data = {
             'user': request.user.id,
             'product_id': request.data.get('productId')
@@ -117,13 +131,13 @@ class Carts(viewsets.ViewSet):
         serializer.save()
         return Response(serializer.data, status = status.HTTP_201_CREATED)
 
-    @action(methods = ['get'], detail = True, permission_classes = [IsAuthenticated])
+    @silk_profile(name = 'Cart Retrieve')
     def retrieve(self, request: Request, pk) -> Response:
         user_products_in_cart = get_object_or_404(Cart, pk = pk)
         serializer = CartSerializer(user_products_in_cart)
         return Response(data = serializer.data, status = status.HTTP_200_OK)
 
-    @action(methods = ['patch'], detail = True, permission_classes = [IsAuthenticated])
+    @silk_profile(name = 'Cart Update')
     def partial_update(self, request: Request, pk) -> Response:
         # Поля для обновления
         amount = request.data.get('amount')
@@ -137,7 +151,7 @@ class Carts(viewsets.ViewSet):
         serializer.save()
         return Response(data = serializer.data, status = status.HTTP_200_OK)
 
-    @action(methods = ['delete'], detail = True, permission_classes = [IsAuthenticated])
+    @silk_profile(name = 'Cart Delete')
     def delete(self, request: Request, pk) -> Response:
         user: AbstractUser | AnonymousUser = request.user
         cart_item = get_object_or_404(Cart, pk = pk)
@@ -156,18 +170,25 @@ class Carts(viewsets.ViewSet):
 class Orders(viewsets.ViewSet):
     serializer_class = OrderSerializer
 
-    @action(methods = ['get'], detail = False, permission_classes = [IsAuthenticated])
+    @silk_profile(name = 'Orders List')
     def list(self, request: Request) -> Response:
         user = request.user
+
+        if not user.is_authenticated:
+            return Response(data = [], status = status.HTTP_204_NO_CONTENT)
 
         orders = Order.objects.user_orders(user).optimized()
         serializer = OrderSerializer(orders, many = True)
         return Response(data = serializer.data,
                         status = status.HTTP_200_OK if serializer.data else status.HTTP_204_NO_CONTENT)
 
-    @action(methods = ['post'], detail = False, permission_classes = [IsAuthenticated])
+    @silk_profile(name = 'Orders')
     def create(self, request: Request) -> Response:
         user: AbstractUser | AnonymousUser = request.user
+
+        # Проверка авторизации
+        if not user.is_authenticated:
+            return Response(status = status.HTTP_403_FORBIDDEN)
 
         cart_items: QuerySet[Cart] = Cart.objects.all().filter(user = user)
         added_products: list[dict] = [
@@ -196,7 +217,7 @@ class Orders(viewsets.ViewSet):
 
         return Response({'order': order_serializer.data, 'formUrl': form_url}, status = status.HTTP_201_CREATED)
 
-    @action(methods = ['get'], detail = True, permission_classes = [IsAuthenticated])
+    @silk_profile(name = 'Cart Retrieve')
     def retrieve(self, request: Request, pk) -> Response:
         user: AbstractUser | AnonymousUser = request.user
         order = get_object_or_404(Order, pk = pk)
@@ -207,7 +228,7 @@ class Orders(viewsets.ViewSet):
         serializer = OrderSerializer(order)
         return Response(data = serializer.data, status = status.HTTP_200_OK)
 
-    @action(methods = ['delete'], detail = True, permission_classes = [IsAuthenticated])
+    @silk_profile(name = 'Cart Delete')
     def delete(self, request: Request, pk) -> Response:
         user: AbstractUser | AnonymousUser = request.user
         order = get_object_or_404(Order, pk = pk)
@@ -293,7 +314,7 @@ class UserMethods(viewsets.ViewSet):
 class UserView(viewsets.ViewSet):
     serializer_class = UserSerializer
 
-    @action(methods = ['get'], detail = True)
+    @silk_profile(name = 'User Retrieve')
     def retrieve(self, request: Request) -> Response:
         user: AbstractUser | AnonymousUser = request.user
         is_authenticated: bool = user.is_authenticated
