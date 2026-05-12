@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('api', '0001_enable_pg_trgm'),
-        ('auth', '0015_alter_group_id_alter_permission_id_alter_user_id'),
+        ('auth', '__latest__'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
