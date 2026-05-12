@@ -1,5 +1,3 @@
-import { API } from "./conf.ts";
-
 export function getCookie(name: string) {
     let cookieValue = null
 
@@ -21,7 +19,7 @@ export function getCookie(name: string) {
 
 export async function fetchAuthToken() {
     try {
-        const response = await fetch(`${API}/auth-token/`, {
+        const response = await fetch(`/api/auth-token/`, {
             method: 'POST'
         })
         const { token } = await response.json()

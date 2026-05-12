@@ -4,7 +4,6 @@
 
     import { useProduct } from "../stores/ProductStore.ts";
     import { useCart } from "../stores/CartStore.ts";
-    import { HOST } from "../conf.ts";
     import Loader from "../components/Loader.vue";
     import { useUser } from "../stores/UserStore.ts";
     import type { CartItem } from "../interfaces/CartItemInterface.ts";
@@ -30,7 +29,7 @@
         <div class="name">{{ product?.name }}</div>
 
         <div class="image">
-            <img :src="HOST + product?.images?.[0]" alt=""/>
+            <img :src="product?.images?.[0]" alt=""/>
         </div>
 
         <div class="price">Цена: {{ product?.price }}₽</div>

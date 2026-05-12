@@ -1,6 +1,5 @@
 import { defineStore } from "pinia";
 
-import { HOST } from "../conf.ts";
 import type { Product } from "../interfaces/ProductInterface.ts";
 import type { StoreFilters } from "../interfaces/StoreFiltersInterface.ts";
 
@@ -15,7 +14,7 @@ export const useStore = defineStore('store', {
             this.store = []
             this.loading = true
 
-            const url = new URL(`${HOST}/api/products/`)
+            const url = new URL(`/api/products/`, window.location.origin)
 
             if (filters.type) url.searchParams.append('type', filters.type)
             if (filters.name) url.searchParams.append('name', filters.name)

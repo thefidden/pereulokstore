@@ -1,6 +1,5 @@
 <script setup lang = "ts">
     import {useRouter} from "vue-router";
-    import {HOST} from "../conf.ts";
     import {computed} from "vue";
     import type {Product} from "../interfaces/ProductInterface.ts";
 
@@ -24,7 +23,7 @@
     <div :class = "['root', playAnimation ? animationName : '']" :style = "`animation-delay: ${animationDelay}s`">
         <div class = "card" @click = "router.push(`/products/${product.id}`)">
             <div class = 'imageFrame'>
-                <img :src = 'HOST + product.images[0]' alt = ''/>
+                <img :src = 'product.images[0]' alt = ''/>
             </div>
             <div class = 'name'>{{ product.name }}</div>
             <div class = 'price'>{{ product.price }}₽</div>

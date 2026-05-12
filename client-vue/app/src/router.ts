@@ -13,6 +13,7 @@ import { useProduct } from "./stores/ProductStore.ts";
 
 export default createRouter({
     history: createWebHistory(),
+
     routes: [
         { path: "/", name: "main", redirect: "/store?type=suit" },
         { path: "/about", name: "about", component: AboutView },

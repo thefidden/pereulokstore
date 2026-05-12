@@ -1,7 +1,6 @@
 <script setup lang = "ts">
     import { ref } from "vue";
     import { useRouter } from "vue-router";
-    import { MEDIA } from "../conf.ts";
 
     const emits = defineEmits(['close'])
 
@@ -9,9 +8,9 @@
     const closingAnimation = ref(false)
 
     const pages = [
-        { name: 'Комиксы', type: 'comics', image: `${MEDIA}/comics-page.jpg` },
-        { name: 'Фигурки', type: 'shape', image: `${MEDIA}/shapes-page.jpg` },
-        { name: 'Костюмы', type: 'suit', image: `${MEDIA}/suits-page.jpg` }
+        { name: 'Комиксы', type: 'comics', image: `/media/static/comics-page.jpg` },
+        { name: 'Фигурки', type: 'shape', image: `/media/static/shapes-page.jpg` },
+        { name: 'Костюмы', type: 'suit', image: `/media/static/suits-page.jpg` }
     ]
 
     function closeMenu() {
@@ -158,7 +157,7 @@
         border: 2px solid white;
         border-radius: 100%;
 
-        will-change: opacity, transform, filter, box-shadow, left;
+        will-change: opacity, transform, filter, box-shadow;
         transition: transform 0.3s ease-out, box-shadow 0.3s ease-out;
 
         cursor: pointer;

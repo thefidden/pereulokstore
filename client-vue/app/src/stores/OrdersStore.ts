@@ -1,6 +1,5 @@
 import { defineStore } from "pinia";
 import type { Order } from "../interfaces/OrderInterface.ts";
-import { API } from "../conf.ts";
 import type { OrderItem } from "../interfaces/OrderItemInterface.ts";
 import { getCookie } from "../utils.ts";
 
@@ -20,7 +19,7 @@ export const useOrders = defineStore("orders", {
             this.loading = true
 
             try {
-                const response = await fetch(`${API}/orders/`, {
+                const response = await fetch(`/api/orders/`, {
                     method: "GET",
                     credentials: "include"
                 })
@@ -53,7 +52,7 @@ export const useOrders = defineStore("orders", {
             this.loading = true
 
             try {
-                const response = await fetch(`${API}/orders/`, {
+                const response = await fetch(`/api/orders/`, {
                     method: "POST",
                     credentials: "include",
                     headers: {
@@ -89,7 +88,7 @@ export const useOrders = defineStore("orders", {
             this.loading = true
 
             try {
-                const response = await fetch(`${API}/orders/${orderId}/payment/check/?bankOrderId=${bankOrderId}`, {
+                const response = await fetch(`/api/orders/${orderId}/payment/check/?bankOrderId=${bankOrderId}`, {
                     credentials: "include"
                 })
                 const { paymentStatus } = await response.json()

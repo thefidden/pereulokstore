@@ -1,6 +1,5 @@
 import { defineStore } from "pinia";
 
-import { HOST } from "../conf.ts";
 import type { Product } from "../interfaces/ProductInterface.ts";
 
 
@@ -14,7 +13,7 @@ export const useProduct = defineStore("product", {
             this.loading = true
 
             try {
-                const response = await fetch(`${HOST}/api/products/${productId}/`)
+                const response = await fetch(`/api/products/${productId}/`)
                 const { id, name, type, description, price, images } = await response.json()
                 this.product = { id, name, type, description, price, images }
             }

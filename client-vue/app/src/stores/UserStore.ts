@@ -1,6 +1,5 @@
 import { defineStore } from "pinia";
 
-import { API, HOST } from "../conf.ts";
 import type { User } from "../interfaces/UserInterface.ts";
 import { fetchAuthToken } from "../utils.ts";
 
@@ -15,7 +14,7 @@ export const useUser = defineStore('user', {
             this.loading = true
 
             try {
-                const response: Response = await fetch(`${HOST}/api/user/`, {
+                const response: Response = await fetch(`/api/user/`, {
                     method: 'GET',
                     credentials: 'include'
                 })
@@ -43,7 +42,7 @@ export const useUser = defineStore('user', {
             window.open(authLink, '_blank')
 
             const interval = setInterval(async () => {
-                const response = await fetch(`${API}/user/authenticate/`, {
+                const response = await fetch(`/api/user/authenticate/`, {
                     method: 'post',
                     credentials: 'include',
                     headers: {
@@ -64,7 +63,7 @@ export const useUser = defineStore('user', {
 
         async deauthenticate() {
             this.loading = true
-            await fetch(`${API}/user/deauthenticate/`, {
+            await fetch(`/api/user/deauthenticate/`, {
                 method: 'get',
                 credentials: 'include'
             })

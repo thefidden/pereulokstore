@@ -1,5 +1,4 @@
 import { defineStore } from "pinia";
-import { API, HOST } from "../conf.ts";
 import type { CartItem } from "../interfaces/CartItemInterface.ts";
 import type { Product } from "../interfaces/ProductInterface.ts";
 import { getCookie } from "../utils.ts";
@@ -9,12 +8,13 @@ export const useCart = defineStore("cart", {
         cart: [] as Array<CartItem>,
         loading: false
     }),
+
     actions: {
         async fetch() {
             this.loading = true
 
             try {
-                const response = await fetch(`${HOST}/api/carts/`, {
+                const response = await fetch(`/api/carts/`, {
                     method: "GET",
                     credentials: "include"
                 })
@@ -39,7 +39,7 @@ export const useCart = defineStore("cart", {
             this.loading = true
 
             try {
-                const response = await fetch(`${HOST}/api/carts/`, {
+                const response = await fetch(`/api/carts/`, {
                     method: "POST",
                     credentials: "include",
                     headers: {
@@ -65,7 +65,7 @@ export const useCart = defineStore("cart", {
             this.loading = true
 
             try {
-                const response = await fetch(`${API}/carts/${cartItem.id}/`, {
+                const response = await fetch(`/api/carts/${cartItem.id}/`, {
                     method: "PATCH",
                     credentials: "include",
                     headers: {
@@ -96,7 +96,7 @@ export const useCart = defineStore("cart", {
             this.loading = true
 
             try {
-                const response = await fetch(`${API}/carts/${cartItem.id}/`, {
+                const response = await fetch(`/api/carts/${cartItem.id}/`, {
                     method: "DELETE",
                     credentials: "include",
                     headers: {

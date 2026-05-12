@@ -1,7 +1,6 @@
 <script setup lang="ts">
     import { ref, watch } from "vue";
     import { useRouter } from "vue-router";
-    import { HOST, MEDIA } from "../conf.ts";
     import { useUser } from "../stores/UserStore.ts";
     import { storeToRefs } from "pinia";
 
@@ -14,8 +13,8 @@
     const closingAnimation = ref(false)
 
     const pages = [
-        { name: "Моя корзина", url: "/cart", image: `${MEDIA}/cart.jpg` },
-        { name: "Мои заказы", url: "/orders", image: `${MEDIA}/order.jpg` }
+        { name: "Моя корзина", url: "/cart", image: `/media/static/cart.jpg` },
+        { name: "Мои заказы", url: "/orders", image: `/media/static/order.jpg` }
     ]
 
     function closeMenu() {
